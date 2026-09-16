@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOATATA LOIC - Vidéaste</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --dark: #0a0a0a;
+            --light: #fafafa;
+            --accent: #ff6b6b;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+        }
+        
+        /* Loader */
+        .loader {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+        .loader-text {
+            font-size: 2rem;
+            letter-spacing: 0.5rem;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 2rem 4%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            mix-blend-mode: difference;
+        }
+        .logo { font-size: 1.2rem; font-weight: 700; letter-spacing: 2px; }
+        .menu-btn {
+            width: 30px;
+            height: 20px;
+            position: relative;
+            cursor: pointer;
+        }
+        .menu-btn span {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: white;
+            transition: all 0.3s;
+        }
+        .menu-btn span:nth-child(1) { top: 0; }
+        .menu-btn span:nth-child(2) { top: 50%; transform: translateY(-50%); }
+        .menu-btn span:nth-child(3) { bottom: 0; }
+
+        /* Full Screen Menu */
+        .fullscreen-menu {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        .fullscreen-menu.active { opacity: 1; pointer-events: all; }
+        .menu-links {
+            list-style: none;
+            text-align: center;
+        }
+        .menu-links li { margin: 2rem 0; }
+        .menu-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 3rem;
+            font-weight: 300;
+            transition: color 0.3s;
+        }
+        .menu-links a:hover { color: var(--accent); }
+
+        /* Hero */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-bg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1920') center/cover;
+            opacity: 0.6;
+            filter: grayscale(100%);
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+        .hero-content h1 {
+            font-size: 6rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+        .hero-content p {
+            font-size: 1.2rem;
+            letter-spacing: 0.3rem;
+            opacity: 0.8;
+        }
+        .scroll-indicator {
+            position: absolute;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-20px); }
+            60% { transform: translateX(-50%) translateY(-10px); }
+        }
+
+        /* Gallery */
+        .gallery {
+            padding: 4rem 2%;
+            columns: 3;
+            column-gap: 1rem;
+        }
+        .gallery-item {
+            break-inside: avoid;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .gallery-item img {
+            width: 100%;
+            display: block;
+            transition: transform 0.5s, filter 0.5s;
+            filter: grayscale(100%);
+        }
+        .gallery-item:hover img {
+            transform: scale(1.05);
+            filter: grayscale(0%);
+        }
+        .gallery-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 2rem;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .gallery-item:hover .gallery-overlay { opacity: 1; }
+        .gallery-overlay h3 { font-size: 1.2rem; font-weight: 500; }
+        .gallery-overlay p { font-size: 0.9rem; opacity: 0.7; }
+
+        /* About Section */
+        .about {
+            padding: 8rem 5%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            align-items: center;
+        }
+        .about-image {
+            position: relative;
+        }
+        .about-image img {
+            width: 100%;
+            filter: grayscale(100%);
+        }
+        .about-image::before {
+            content: '';
+            position: absolute;
+            top: -2rem; left: -2rem;
+            width: 100%; height: 100%;
+            border: 2px solid var(--accent);
+            z-index: -1;
+        }
+        .about-content h2 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+        .about-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            opacity: 0.8;
+            margin-bottom: 1.5rem;
+        }
+        .skills {
+            margin-top: 3rem;
+        }
+        .skill {
+            margin-bottom: 1.5rem;
+        }
+        .skill-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .skill-bar {
+            height: 2px;
+            background: #333;
+            position: relative;
+        }
+        .skill-bar::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            height: 100%;
+            background: var(--accent);
+            width: var(--progress);
+        }
+
+        /* Pricing */
+        .pricing {
+            padding: 6rem 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 4rem;
+            font-weight: 300;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+        .pricing-card {
+            border: 1px solid #333;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .pricing-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-10px);
+        }
+        .pricing-card.featured {
+            border-color: var(--accent);
+            position: relative;
+        }
+        .pricing-card.featured::before {
+            content: 'Populaire';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            padding: 0.3rem 1rem;
+            font-size: 0.8rem;
+        }
+        .price {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 1.5rem 0;
+        }
+        .price span {
+            font-size: 1rem;
+            opacity: 0.5;
+            font-weight: 400;
+        }
+        .pricing-features {
+            list-style: none;
+            margin: 2rem 0;
+        }
+        .pricing-features li {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #222;
+            opacity: 0.8;
+        }
+        .btn-outline {
+            display: inline-block;
+            padding: 1rem 2rem;
+            border: 1px solid white;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .btn-outline:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* Contact */
+        .contact {
+            padding: 6rem 5%;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .contact h2 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+        .contact-info-large {
+            font-size: 1.5rem;
+            margin: 2rem 0;
+            opacity: 0.8;
+        }
+        .contact-email {
+            font-size: 2rem;
+            color: var(--accent);
+            text-decoration: none;
+            display: inline-block;
+            margin: 2rem 0;
+            transition: opacity 0.3s;
+        }
+        .contact-email:hover { opacity: 0.7; }
+
+        /* Footer */
+        footer {
+            padding: 3rem;
+            text-align: center;
+            border-top: 1px solid #222;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .gallery { columns: 2; }
+            .about { grid-template-columns: 1fr; }
+            .pricing-grid { grid-template-columns: 1fr; }
+            .hero-content h1 { font-size: 3rem; }
+            .menu-links a { font-size: 2rem; }
+        }
+        @media (max-width: 600px) {
+            .gallery { columns: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loader" id="loader">
+        <div class="loader-text">SOATATA LOIC</div>
+    </div>
+
+    <nav>
+        <div class="logo">SOATATA LOIC</div>
+        <div class="menu-btn" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+
+    <div class="fullscreen-menu" id="menu">
+        <ul class="menu-links">
+            <li><a href="#accueil" onclick="toggleMenu()">Accueil</a></li>
+            <li><a href="#portfolio" onclick="toggleMenu()">Portfolio</a></li>
+            <li><a href="#apropos" onclick="toggleMenu()">À Propos</a></li>   
+            <li><a href="#contact" onclick="toggleMenu()">Contact</a></li>
+        </ul>
+    </div>
+
+    <section class="hero" id="accueil">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <h1>Capturer<br>l'Instant</h1>
+            <p>Vidéaste Professionnel • MADAGASCAR</p>
+        </div>
+        <div class="scroll-indicator">↓</div>
+    </section>
+
+    <section class="gallery" id="portfolio">
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=600" alt="Mariage">
+            <div class="gallery-overlay">
+                <h3>Amélie & Thomas</h3>
+                <p>Mariage • Château</p>
+            </div>
+        </div>
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600" alt="Portrait">
+            <div class="gallery-overlay">
+                <h3>Portrait Studio</h3>
+                <p>Mode • Lumière</p>
+            </div>
+        </div>
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600" alt="Paysage">
+            <div class="gallery-overlay">
+                <h3>Alpes</h3>
+                <p>Paysage • Montagne</p>
+            </div>
+        </div>
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600" alt="Mariage">
+            <div class="gallery-overlay">
+                <h3>Sophie & Marc</h3>
+                <p>Mariage • Outside</p>
+            </div>
+        </div>
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600" alt="Portrait">
+            <div class="gallery-overlay">
+                <h3>Collection Été</h3>
+                <p>Mode • Mannequin</p>
+            </div>
+        </div>
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600" alt="Nature">
+            <div class="gallery-overlay">
+                <h3>Brouillard Matinal</h3>
+                <p>Nature • Forêt Noire</p>
+            </div>
+        </div>
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600" alt="Portrait">
+            <div class="gallery-overlay">
+                <h3>Emma</h3>
+                <p>Portrait • Studio</p>
+            </div>
+        </div>
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600" alt="Paysage">
+            <div class="gallery-overlay">
+                <h3>Lever de Soleil</h3>
+                <p>Paysage • Soleil/p>
+            </div>
+        </div>
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600" alt="Portrait">
+            <div class="gallery-overlay">
+                <h3>Julie</h3>
+                <p>Portrait • Naturel</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="about" id="apropos">
+        <div class="about-image">
+            <img src="https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=600" alt="SOATATA LOIC">
+        </div>
+        <div class="about-content">
+            <h2>À Propos</h2>
+            <p>Vidéaste basé à Madagsdcar, je capture les moments qui comptent depuis plus de 6 ans. Mon approche mêle technique précise et sensibilité artistique pour créer des images et vidéos intemporelles.</p>
+            <p>Spécialisé dans les montages vidéos et photos, je travaille avec des clients du monde entier pour donner vie à leur vision.</p>
+            
+            <div class="skills">
+                <div class="skill">
+                    <div class="skill-header">
+                        <span>Photographie Portrait</span>
+                        <span>95%</span>
+                    </div>
+                    <div class="skill-bar" style="--progress: 95%"></div>
+                </div>
+                <div class="skill">
+                    <div class="skill-header">
+                        <span>Photographie de Mariage</span>
+                        <span>90%</span>
+                    </div>
+                    <div class="skill-bar" style="--progress: 90%"></div>
+                </div>
+                <div class="skill">
+                    <div class="skill-header">
+                        <span>Retouche Photo</span>
+                        <span>88%</span>
+                    </div>
+                    <div class="skill-bar" style="--progress: 88%"></div>
+                </div>
+                <div class="skill">
+                    <div class="skill-header">
+                        <span>Direction Artistique</span>
+                        <span>85%</span>
+                    </div>
+                    <div class="skill-bar" style="--progress: 85%"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+        <section class="contact" id="contact">
+        <h2>Travaillons Ensemble</h2>
+        <p class="contact-info-large">Disponible pour projets à l'international</p>
+        <a href="mailto:soatataloic@gmail.com" class="contact-email">soatataloic@gmail.com</a>
+        <p>+261388114225</p>
+        <p style="margin-top: 2rem; opacity: 0.5;">MADAGASCAR</p>
+    </section>
+
+    <footer>
+        <p> 2026 SOATATA LOIC. Tous droits réservés.</p>
+    </footer>
+
+    <script>
+        // Loader
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                }, 500);
+            }, 1500);
+        });
+
+        // Menu Toggle
+        function toggleMenu() {
+            document.getElementById('menu').classList.toggle('active');
+        }
+
+        // Smooth Scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
